@@ -9,14 +9,70 @@ const API_URL = 'http://localhost:4040';
 const AuthScreen = () => {
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
 
 
-    const onLoggedIn = () => {
+    const onLoggedIn = (token) => {
+        fetch(`${API_URL}/private`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`, 
+            },
+        }).then(async response => {
+            const jsonResponse = await response.json();
+            if (response.status === 200) {
+                setMessage(jsonResponse.message);
+            }
+            if (response.status == 404) {
+                setMessage(jsonResponse.message);
+                window.setTimeout(() => {
+                    setMessage('');
+                }, 2000);
+            }
+        })
+    }
+
+    const submitForm = () => {
+        console.log(email, name, password)
         const payload = {
             email,name,password
         };
+        fetch(`${API_URL}/${isLogin ? 'login' : 'register'}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        }).then(async res => { 
+            try {
+                const jsonRes = await res.json();
+                if (res.status !== 200) {
+                    setMessage(jsonRes.message);
+                } else {
+
+                    onLoggedIn(jsonRes.token);
+                    setMessage(jsonRes.message);
+                }
+            } catch (err) {
+                console.log(err);
+            };
+        })
+        .catch(err => {
+            console.log(err);
+        });
+    }
+
+    const onChangeHandler = () => {
+        setIsLogin(!isLogin);
+        setMessage('');
+    };
+
+    const getMessage = () => {
+        // const status = isError ? `Error: ` : `Success: `;
+        return message;
     }
 
     return (
@@ -25,17 +81,24 @@ const AuthScreen = () => {
                 <Text style={styles.title}>Clothy</Text>
                 <View style={styles.form}>
 
+                    {!isLogin && <View style={styles.subTitle}><Text style={styles.subTitleInput}>Nombre</Text></View>}
+                    {!isLogin && <TextInput style={styles.input} placeholder="Ingresa tu nombre" placeholderTextColor="rgba(117, 98, 126, 1)"  onChangeText={setName}></TextInput>}
                     <View style={styles.subTitle}>
                         <Text style={styles.subTitleInput}>Email</Text>
                     </View>
                     <TextInput style={styles.input} placeholderTextColor="rgba(117, 98, 126, 1)" autoCapitalize='none' autoCorrect={false} onChangeText={setEmail} autoCompleteType='email' placeholder="Ingresa tu email" />
                     <View style={styles.subTitle}>
-                        <Text style={styles.subTitleInput}>Password</Text>
+                        <Text style={styles.subTitleInput}>Contraseña</Text>
                     </View>
-                    <TextInput style={styles.input} placeholderTextColor="rgba(117, 98, 126, 1)"  secureTextEntry={true}  placeholder="Ingresa tu contraseña" />
-                    <AnimatedButton name="text" color="rgba(16, 140, 130, 43)" textColor="#ffff" function={onLoggedIn}> Registrate </AnimatedButton>
+                    <TextInput style={styles.input} placeholderTextColor="rgba(117, 98, 126, 1)"  secureTextEntry={true}  onChangeText={setPassword}placeholder="Ingresa tu contraseña" />
+                    <Text style={[]}>{message ? message : null}</Text>
 
-                    <AnimatedButton name="text" color="rgba(117, 98, 126, 1)" textColor="#ffff"> Login </AnimatedButton>
+
+                    <AnimatedButton name="text" color="rgba(117, 98, 126, 1)" textColor="#ffff" function={submitForm}> Enviar </AnimatedButton>
+                    <AnimatedButton name="text" color="rgba(16, 140, 130, 43)" textColor="#ffff" function={onChangeHandler}> {isLogin ? 'Registrate' : 'Inicia Sesión'} </AnimatedButton>
+
+
+
                 </View>
             </View>
         </ImageBackground>

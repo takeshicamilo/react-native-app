@@ -11,12 +11,12 @@ const signup = (req, res, next) => {
     }})
     .then(dbUser => {
         if (dbUser) {
-            return res.status(409).json({message: "email already exists"});
-        } else if (req.body.email && req.body.password) {
+            return res.status(409).json({message: "El email ya esta registrado"});
+        } else if (req.body.email && req.body.password && req.body.name) {
             // password hash
             bcrypt.hash(req.body.password, 12, (err, passwordHash) => {
                 if (err) {
-                    return res.status(500).json({message: "couldnt hash the password"}); 
+                    return res.status(500).json({message: "No se pudo encriptar tu contraseña"}); 
                 } else if (passwordHash) {
                     return User.create(({
                         email: req.body.email,
@@ -24,18 +24,20 @@ const signup = (req, res, next) => {
                         password: passwordHash,
                     }))
                     .then(() => {
-                        res.status(200).json({message: "user created"});
+                        res.status(200).json({message: "Usuario creado"});
                     })
                     .catch(err => {
                         console.log(err);
-                        res.status(502).json({message: "error while creating the user"});
+                        res.status(502).json({message: "Error mientras se intenta crear el usuario"});
                     });
                 };
             });
         } else if (!req.body.password) {
-            return res.status(400).json({message: "password not provided"});
-        } else if (!req.body.email) {
-            return res.status(400).json({message: "email not provided"});
+            return res.status(400).json({message: "Contraseña requerida"});
+        }else if (!req.body.name) {
+            return res.status(400).json({message: "Nombre requerido"});
+        }else if (!req.body.email) {
+            return res.status(400).json({message: "Email requerido"});
         };
     })
     .catch(err => {
@@ -44,13 +46,12 @@ const signup = (req, res, next) => {
 };
 
 const login = (req, res, next) => {
-    // checks if email exists
+    console.log(res.body);
     User.findOne({ where : {
         email: req.body.email, 
-    }})
-    .then(dbUser => {
+    }}).then(dbUser => {
         if (!dbUser) {
-            return res.status(404).json({message: "user not found"});
+            return res.status(404).json({message: "Usuario no encontado"});
         } else {
             // password hash
             bcrypt.compare(req.body.password, dbUser.password, (err, compareRes) => {

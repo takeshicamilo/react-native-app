@@ -14,6 +14,7 @@ const User = sequelize.define('users', {
     },
     name: {
         type: Sequelize.STRING,
+        allowNull: false,
     },
     password: {
         type: Sequelize.STRING,
@@ -21,4 +22,5 @@ const User = sequelize.define('users', {
     },
 });
 
-exports.User = User;
+module.exports = User;
+
